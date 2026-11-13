@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nyquist Lab – مختبر نايكوست التفاعلي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+/* ============ الألوان والأساسيات ============ */
+:root{
+  --bg:#070d22; --panel:#0d1633; --panel2:#111d42; --plot:#0b1330;
+  --line:#223262; --line2:#31468a;
+  --text:#e8eefc; --muted:#9aaace;
+  --cyan:#38bdf8; --cyan2:#67e8f9; --violet:#8b5cf6; --violet2:#b79cff;
+  --red:#ff4d5e; --green:#3ddc97; --amber:#fbbf24;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{
+  margin:0;font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;
+  background-color:var(--bg);color:var(--text);line-height:1.85;font-size:16px;
+  background-image:
+    linear-gradient(rgba(56,189,248,.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(56,189,248,.05) 1px,transparent 1px);
+  background-size:44px 44px;
+}
+a{color:inherit;text-decoration:none}
+h1,h2,h3,h4{line-height:1.35;margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding:0 22px}
+.ltr{direction:ltr;unicode-bidi:isolate;display:inline-block;font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--cyan2);outline-offset:3px}
+
+/* ============ الشريط العلوي ============ */
+.nav{position:sticky;top:0;z-index:50;background:rgba(7,13,34,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;gap:16px;height:58px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;direction:ltr}
+.links{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.links::-webkit-scrollbar{display:none}
+.links a{padding:6px 14px;border-radius:6px;color:var(--muted);font-weight:500;font-size:15px;white-space:nowrap;transition:.2s}
+.links a:hover{color:var(--text);background:var(--panel2)}
+
+/* ============ الصفحة الرئيسية ============ */
+.hero{padding:56px 0 40px}
+.hero-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:40px;align-items:center}
+.hero h1{font-size:clamp(38px,5.4vw,68px);font-weight:700;letter-spacing:-.5px}
+.hero .sub-en{display:block;margin-top:6px;direction:ltr;text-align:right;font-weight:500;font-size:clamp(18px,2.2vw,26px);color:var(--cyan)}
+.hero p.lead{font-size:19px;color:var(--muted);max-width:30em;margin:22px 0 28px}
+.cta{display:flex;flex-wrap:wrap;gap:12px}
+.btn{
+  font-family:inherit;font-size:16px;font-weight:600;cursor:pointer;border-radius:8px;padding:11px 22px;
+  border:1px solid var(--line2);background:var(--panel2);color:var(--text);transition:.18s;display:inline-flex;align-items:center;gap:8px
+}
+.btn:hover{border-color:var(--cyan);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.primary{background:linear-gradient(135deg,var(--cyan),var(--violet));border-color:transparent;color:#06102a}
+.btn.small{padding:6px 14px;font-size:14px}
+.hero-art{background:var(--plot);border:1px solid var(--line);border-radius:12px;padding:10px 10px 4px}
+.hero-art svg{width:100%;height:auto;display:block}
+.hero-art figcaption{font-size:13.5px;color:var(--muted);padding:6px 12px 10px;line-height:1.7}
+.hero-art{margin:0}
+
+/* ============ الأقسام ============ */
+.sec{padding:64px 0 8px}
+.sec-head{margin-bottom:26px;max-width:46em}
+.sec-head h2{font-size:clamp(26px,3.4vw,38px);font-weight:700}
+.sec-head p{color:var(--muted);margin:8px 0 0}
+.en{direction:ltr;unicode-bidi:isolate;display:inline-block}
+
+/* لوحة بشريط عنوان (شكل أجهزة القياس) */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 16px;background:var(--panel2);border-bottom:1px solid var(--line);font-weight:600;font-size:15px}
+.panel-h small{color:var(--muted);font-weight:400;font-size:13px}
+.panel-b{padding:16px}
+
+/* ============ المختبر ============ */
+.lab-grid{display:grid;grid-template-columns:300px minmax(0,1fr) 270px;gap:16px;align-items:start}
+.sys-list{display:grid;gap:8px;margin-bottom:18px}
+.sys-btn{
+  font-family:inherit;color:var(--text);text-align:center;cursor:pointer;background:var(--plot);
+  border:1px solid var(--line);border-radius:8px;padding:8px 10px;transition:.18s;
+}
+.sys-btn:hover{border-color:var(--line2)}
+.sys-btn.on{border-color:var(--cyan);background:#0f1f4a;box-shadow:inset 0 0 0 1px var(--cyan)}
+.sys-btn .tag{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.field{margin:14px 0}
+.field label{display:flex;justify-content:space-between;align-items:baseline;font-size:14.5px;margin-bottom:2px;color:var(--muted)}
+.field label b{color:var(--cyan2);font-size:16px}
+input[type=range]{width:100%;accent-color:var(--cyan);height:26px;direction:ltr;cursor:pointer}
+.check{display:flex;align-items:center;gap:10px;font-size:15px;margin:12px 0;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--cyan)}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.formula{background:var(--plot);border:1px dashed var(--line2);border-radius:8px;padding:6px 8px;text-align:center;min-height:62px;display:flex;align-items:center;justify-content:center;direction:ltr;overflow-x:auto}
+.plot{width:100%;height:580px;background:var(--plot)}
+.plot.sm{height:430px}
+.plot.bode{height:560px}
+.kv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:0}
+.kv{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.kv:last-child{border-bottom:0}
+.kv span{color:var(--muted)}
+.kv b{font-weight:600;color:var(--text)}
+.kv b.hi{color:var(--amber)}
+.err{padding:30px;color:var(--amber);text-align:center}
+
+/* ============ الاستقرارية ============ */
+.st-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px}
+.nums{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.num{background:var(--plot);border:1px solid var(--line);border-radius:8px;padding:10px 8px;text-align:center}
+.num small{display:block;color:var(--muted);font-size:12.5px;line-height:1.4;min-height:36px}
+.num b{font-size:28px;font-weight:700}
+.badge{display:flex;align-items:center;gap:10px;border-radius:8px;padding:12px 16px;font-weight:700;font-size:19px;border:1px solid}
+.badge i{width:12px;height:12px;border-radius:50%;background:currentColor;flex:none}
+.b-stable{color:var(--green);background:rgba(61,220,151,.09);border-color:rgba(61,220,151,.45)}
+.b-unstable{color:var(--red);background:rgba(255,77,94,.09);border-color:rgba(255,77,94,.45)}
+.b-marginal{color:var(--amber);background:rgba(251,191,36,.09);border-color:rgba(251,191,36,.45)}
+.b-undetermined{color:#cbd5e1;background:rgba(148,163,184,.1);border-color:rgba(148,163,184,.45)}
+.st-text p{margin:10px 0}
+.st-text .eq{background:var(--plot);border-radius:6px;padding:8px 12px;margin:10px 0;border-inline-start:3px solid var(--violet)}
+.note{font-size:14px;color:var(--muted)}
+.pole-list{font-size:14px;color:var(--muted);margin:6px 0}
+.pole-list .rhp{color:var(--red);font-weight:600}
+
+/* ============ الشرح ============ */
+.learn-list{display:grid;gap:10px}
+details.lq{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+details.lq summary{cursor:pointer;list-style:none;padding:14px 18px;font-weight:600;font-size:17.5px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+details.lq summary::-webkit-details-marker{display:none}
+details.lq summary::after{content:"+";font-size:22px;color:var(--cyan);transition:transform .25s}
+details.lq[open] summary::after{transform:rotate(45deg)}
+details.lq[open] summary{border-bottom:1px solid var(--line)}
+.lq-b{padding:6px 20px 18px;color:#d3dcf3}
+.lq-b p{margin:10px 0}
+.lq-b ul,.lq-b ol{padding-inline-start:22px;margin:8px 0}
+.lq-b li{margin:4px 0}
+.eqb{direction:ltr;overflow-x:auto;padding:4px 0}
+.fig{display:flex;justify-content:center;margin:12px 0}
+.fig svg{max-width:100%;height:auto;background:var(--plot);border:1px solid var(--line);border-radius:8px}
+.fig-cap{text-align:center;font-size:13.5px;color:var(--muted);margin-top:-4px}
+
+/* ============ التجارب ============ */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.tab{font-family:inherit;font-size:15.5px;font-weight:600;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px 18px;cursor:pointer;transition:.18s}
+.tab:hover{color:var(--text);border-color:var(--line2)}
+.tab.on{color:#06102a;background:var(--cyan);border-color:var(--cyan)}
+.ex-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:16px}
+.steps{padding-inline-start:20px;margin:8px 0 4px;color:#d3dcf3}
+.steps li{margin:6px 0}
+.callout{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-inline-start:4px solid var(--violet);border-radius:10px;padding:14px 20px}
+.callout h4{font-size:17px;margin-bottom:6px;color:var(--violet2)}
+.callout p{margin:8px 0}
+table.cmp{width:100%;border-collapse:collapse;font-size:14.5px;margin:8px 0}
+table.cmp th,table.cmp td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:center}
+table.cmp th{color:var(--muted);font-weight:500}
+.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+
+/* ============ المقارنة ============ */
+.cmp-ctl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:end}
+select{font-family:inherit;font-size:15px;color:var(--text);background:var(--plot);border:1px solid var(--line2);border-radius:6px;padding:8px 10px;width:100%;direction:ltr}
+.cmp-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;margin-top:16px}
+.margins{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.margins .num b{font-size:22px}
+
+footer{margin-top:70px;border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);font-size:14.5px;text-align:center}
+
+/* ============ الاستجابة للشاشات ============ */
+@media (max-width:1180px){
+  .lab-grid{grid-template-columns:290px minmax(0,1fr)}
+  .lab-grid .info{grid-column:1/-1}
+}
+@media (max-width:900px){
+  .hero-in,.st-grid,.ex-grid,.cmp-grid{grid-template-columns:1fr}
+  .lab-grid{grid-template-columns:1fr}
+  .plot{height:450px}.plot.sm{height:380px}.plot.bode{height:500px}
+  .nums,.margins{grid-template-columns:repeat(2,1fr)}
+  .cmp-ctl{grid-template-columns:1fr;gap:6px}
+  .hero{padding-top:30px}
+  .brand span{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<!-- ================= الشريط العلوي ================= -->
+<nav class="nav"><div class="wrap nav-in">
+  <a class="brand" href="#home" aria-label="Nyquist Lab">
+    <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="7" fill="#0d1633" stroke="#31468a"/><path d="M5 15h20M15 5v20" stroke="#31468a" stroke-width="1"/><path d="M24 15C24 5 8 4 8 12c0 6 9 8 11 1" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/><circle cx="11" cy="15" r="2" fill="#ff4d5e"/></svg>
+    <span>Nyquist Lab</span>
+  </a>
+  <div class="links">
+    <a href="#lab">المختبر</a><a href="#stability">الاستقرارية</a><a href="#learn">الشرح</a><a href="#exps">التجارب</a><a href="#compare">المقارنة Bode</a>
+  </div>
+</div></nav>
+
+<!-- ================= الصفحة الرئيسية ================= -->
+<header id="home" class="hero"><div class="wrap hero-in">
+  <div>
+    <h1>مختبر نايكوست التفاعلي<span class="sub-en">Nyquist Lab</span></h1>
+    <p class="lead">اكتشف كيف تتغير الاستجابة الترددية واستقرارية الأنظمة من خلال التجربة والمحاكاة.</p>
+    <div class="cta">
+      <a class="btn primary" href="#lab">ابدأ التجربة</a>
+      <a class="btn" href="#learn">تعرّف على مخطط نايكوست</a>
+    </div>
+  </div>
+  <figure class="hero-art">
+    <svg id="heroSvg" viewBox="0 0 560 440" role="img" aria-label="رسم متحرك لمنحنى Nyquist">
+      <defs>
+        <linearGradient id="hg" gradientUnits="userSpaceOnUse" x1="100" y1="0" x2="460" y2="0">
+          <stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#38bdf8"/>
+        </linearGradient>
+      </defs>
+      <g id="heroGrid"></g>
+      <line id="hAxX" stroke="#31468a" stroke-width="1.2"/><line id="hAxY" stroke="#31468a" stroke-width="1.2"/>
+      <path id="heroBase" fill="none" stroke="#223262" stroke-width="2"/>
+      <path id="heroPath" fill="none" stroke="url(#hg)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle id="heroCrit" r="6" fill="#ff4d5e"/>
+      <circle id="heroCritRing" r="6" fill="none" stroke="#ff4d5e" stroke-width="1.5"><animate attributeName="r" values="6;17;6" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0;.9" dur="2.4s" repeatCount="indefinite"/></circle>
+      <text id="heroCritT" fill="#ff8a95" font-size="13" text-anchor="middle" direction="ltr">(−1, 0)</text>
+      <circle id="heroDot" r="6" fill="#fbbf24" stroke="#fff" stroke-width="1.5"/>
+      <text id="heroLblRe" fill="#9aaace" font-size="12" direction="ltr">Re</text>
+      <text id="heroLblIm" fill="#9aaace" font-size="12" direction="ltr">Im</text>
+    </svg>
+    <figcaption>مثال محسوب في المتصفح: <span class="ltr">L(s) = 10/(s+1)³</span> — يحيط المنحنى بالنقطة الحرجة (−1,0) مرتين باتجاه عقارب الساعة، فالحلقة المغلقة غير مستقرة (Z = 2).</figcaption>
+  </figure>
+</div></header>
+
+<main class="wrap">
+
+<!-- ================= المختبر التفاعلي ================= -->
+<section id="lab" class="sec">
+  <div class="sec-head">
+    <h2>المختبر التفاعلي <span class="en">Interactive Nyquist Lab</span></h2>
+    <p>اختر نظاماً وغيّر الربح K والتردد ω؛ يُعاد حساب المنحنى والنتائج فوراً من دالة التحويل.</p>
+  </div>
+  <div class="lab-grid">
+    <!-- لوحة التحكم -->
+    <div class="panel">
+      <div class="panel-h">لوحة التحكم <small>Controls</small></div>
+      <div class="panel-b">
+        <div class="sys-list" id="sysList"></div>
+        <div class="formula" id="formulaLab"></div>
+        <div class="field">
+          <label>ربح الحلقة <span class="en">K</span><b class="ltr out-K">1.0</b></label>
+          <input type="range" class="bind-K" min="0.1" max="20" step="0.1" value="1" aria-label="قيمة K">
+        </div>
+        <div class="field">
+          <label>التردد <span class="en">ω (rad/s)</span><b class="ltr out-W">1.000</b></label>
+          <input type="range" class="bind-T" min="-2" max="2" step="0.01" value="0" aria-label="التردد ω">
+        </div>
+        <label class="check"><input type="checkbox" class="bind-neg" checked> إظهار الترددات السالبة <span class="en">(ω &lt; 0)</span></label>
+        <div class="btn-row">
+          <button class="btn small" id="btnReset">إعادة ضبط</button>
+          <button class="btn small" id="btnPng">تنزيل PNG</button>
+        </div>
+        <p class="note" style="margin-top:14px">L(s) = K·H(s) هي دالة الحلقة المفتوحة مع تغذية خلفية سالبة أحادية. القيمة K = 1 تعيد النظام الأصلي.</p>
+      </div>
+    </div>
+    <!-- الرسم -->
+    <div class="panel">
+      <div class="panel-h">مخطط Nyquist <small>تكبير: عجلة الفأرة · تحريك: سحب · التفاصيل: مرّر على المنحنى</small></div>
+      <div class="plot" id="plotLab"></div>
+    </div>
+    <!-- معلومات الاستجابة -->
+    <div class="panel info">
+      <div class="panel-h">الاستجابة الترددية <small>عند ω الحالي</small></div>
+      <div class="panel-b"><div class="kv-grid" id="infoBox"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= تحليل الاستقرارية ================= -->
+<section id="stability" class="sec">
+  <div class="sec-head">
+    <h2>تحليل الاستقرارية <span class="en">Stability Analysis</span></h2>
+    <p>النقطة الحرجة هي (−1,0). نعدّ الإحاطات الصافية باتجاه عقارب الساعة (N) ونطبّق Z = N + P.</p>
+  </div>
+  <div class="st-grid">
+    <div class="panel">
+      <div class="panel-h">النتيجة <small id="stSysName"></small></div>
+      <div class="panel-b">
+        <div class="nums">
+          <div class="num"><small>أقطاب الحلقة المفتوحة في RHP<br>P</small><b id="stP">–</b></div>
+          <div class="num"><small>الإحاطات الصافية (مع عقارب الساعة)<br>N</small><b id="stN">–</b></div>
+          <div class="num"><small>أقطاب الحلقة المغلقة في RHP<br>Z</small><b id="stZ">–</b></div>
+          <div class="num"><small>أقطاب على الأصل<br>m₀</small><b id="stM">–</b></div>
+        </div>
+        <div id="stBadge" class="badge b-undetermined"><i></i><span>–</span></div>
+        <div class="pole-list" id="stPoles" style="margin-top:14px"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-h">التفسير <small>مبني على القيم الحالية</small></div>
+      <div class="panel-b st-text" id="stText"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= الشرح التعليمي ================= -->
+<section id="learn" class="sec">
+  <div class="sec-head">
+    <h2>الشرح التعليمي <span class="en">Theory</span></h2>
+    <p>سبعة أسئلة تغطي الفكرة من الاستجابة الترددية حتى معيار الاستقرار.</p>
+  </div>
+  <div class="learn-list">
+
+    <details class="lq" open>
+      <summary>١. ما هو مخطط نايكوست؟</summary>
+      <div class="lq-b">
+        <p>مخطط نايكوست <span class="en">(Nyquist Plot)</span> هو رسم في المستوى المركّب لدالة الحلقة المفتوحة \(L(j\omega)\) عندما يتغير التردد \(\omega\) من \(-\infty\) إلى \(+\infty\). المحور الأفقي هو الجزء الحقيقي والرأسي هو الجزء التخيلي، وكل نقطة تمثّل مقدار الاستجابة وطورها عند تردد معيّن.</p>
+        <div class="eqb">$$L(j\omega)=G(j\omega)H(j\omega)=\mathrm{Re}\{L\}+j\,\mathrm{Im}\{L\}$$</div>
+        <p>تكمن قيمته في أنه يحكم على استقرار نظام الحلقة المغلقة اعتماداً على الاستجابة الترددية للحلقة المفتوحة فقط، دون حساب أقطاب الحلقة المغلقة.</p>
+      </div>
+    </details>
+
+    <details class="lq">
+      <summary>٢. ما هي الاستجابة الترددية؟</summary>
+      <div class="lq-b">
+        <p>إذا دخل جيب \(u(t)=A\sin(\omega t)\) إلى نظام خطي ثابت مستقر، فإن الخرج في الحالة المستقرة جيب بالتردد نفسه، يتغير مقداره وطوره فقط:</p>
+        <div class="eqb">$$y_{ss}(t)=A\,\big|G(j\omega)\big|\,\sin\!\big(\omega t+\angle G(j\omega)\big)$$</div>
+        <p>فالاستجابة الترددية هي الدالة المركّبة \(G(j\omega)\) بمقدارها \(|G|\) وطورها \(\angle G\) عند كل تردد.</p>
+      </div>
+    </details>
+
+    <details class="lq">
+      <summary>٣. ما العلاقة بين تحويل لابلاس وتحويل فورييه؟</summary>
+      <div class="lq-b">
+        <div class="eqb">$$G(s)=\int_{0}^{\infty}g(t)\,e^{-st}\,dt,\qquad s=\sigma+j\omega$$</div>
+        <div class="eqb">$$G(j\omega)=G(s)\Big|_{s=j\omega}=\int_{0}^{\infty}g(t)\,e^{-j\omega t}\,dt$$</div>
+        <p>تحويل فورييه هو تحويل لابلاس محسوباً على المحور التخيلي (\(\sigma=0\)). وهذا صحيح عندما يقع المحور \(j\omega\) داخل منطقة التقارب، كما في الأنظمة المستقرة. لذلك نحصل على الاستجابة الترددية بالتعويض \(s=j\omega\) في دالة التحويل.</p>
+      </div>
+    </details>
+
+    <details class="lq">
+      <summary>٤. ما المقصود بالجزء الحقيقي والتخيلي؟</summary>
+      <div class="lq-b">
+        <p>بعد التعويض \(s=j\omega\) تصبح النتيجة عدداً مركّباً. مثال على \(H(s)=\dfrac{1}{s+1}\):</p>
+        <div class="eqb">$$H(j\omega)=\frac{1}{1+j\omega}=\underbrace{\frac{1}{1+\omega^{2}}}_{\mathrm{Re}}\;-\;j\,\underbrace{\frac{\omega}{1+\omega^{2}}}_{-\mathrm{Im}}$$</div>
+        <div class="eqb">$$|H|=\frac{1}{\sqrt{1+\omega^{2}}},\qquad \angle H=-\arctan\omega$$</div>
+        <p>الجزء الحقيقي والتخيلي هما إحداثيا النقطة على مخطط نايكوست، أما المقدار والطور فهما إحداثياها القطبيان (طول المتجه وزاويته).</p>
+        <div class="fig">
+          <svg viewBox="0 0 360 250" width="420" role="img" aria-label="متجه الاستجابة الترددية">
+            <defs><marker id="ah1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#38bdf8"/></marker></defs>
+            <line x1="20" y1="110" x2="345" y2="110" stroke="#31468a"/><line x1="100" y1="10" x2="100" y2="240" stroke="#31468a"/>
+            <text x="338" y="102" fill="#9aaace" font-size="12" direction="ltr">Re</text><text x="106" y="20" fill="#9aaace" font-size="12" direction="ltr">Im</text>
+            <line x1="100" y1="110" x2="190" y2="200" stroke="#38bdf8" stroke-width="3" marker-end="url(#ah1)"/>
+            <line x1="190" y1="110" x2="190" y2="200" stroke="#8b5cf6" stroke-dasharray="4 4"/><line x1="100" y1="200" x2="190" y2="200" stroke="#8b5cf6" stroke-dasharray="4 4"/>
+            <path d="M140 110A40 40 0 0 1 128.3 138.3" fill="none" stroke="#fbbf24" stroke-width="2"/>
+            <text x="200" y="104" fill="#b79cff" font-size="12.5" direction="ltr">Re = 0.5</text>
+            <text x="30" y="205" fill="#b79cff" font-size="12.5" direction="ltr">Im = −0.5</text>
+            <text x="160" y="170" fill="#67e8f9" font-size="12.5" direction="ltr">|H| = 0.707</text>
+            <text x="146" y="134" fill="#fbbf24" font-size="12.5" direction="ltr">φ = −45°</text>
+            <text x="196" y="218" fill="#9aaace" font-size="12" direction="ltr">ω = 1 rad/s</text>
+          </svg>
+        </div>
+        <div class="fig-cap">النقطة المقابلة لـ ω = 1 على النظام 1/(s+1)</div>
+      </div>
+    </details>
+
+    <details class="lq">
+      <summary>٥. كيف يتم رسم مخطط نايكوست؟</summary>
+      <div class="lq-b">
+        <ol>
+          <li>اكتب دالة الحلقة المفتوحة \(L(s)\) وعوّض \(s=j\omega\).</li>
+          <li>احسب \(L(j\omega)\) لقيم متعددة من \(\omega\ge 0\) (المقدار والطور، أو الجزئين الحقيقي والتخيلي).</li>
+          <li>الترددات السالبة تعطي الصورة المرآتية حول المحور الحقيقي لأن معاملات \(L\) حقيقية:</li>
+        </ol>
+        <div class="eqb">$$L(-j\omega)=\overline{L(j\omega)}$$</div>
+        <ol start="4">
+          <li>إذا وُجد قطب عند الأصل نتفادى المرور فيه بنصف دائرة صغيرة نصف قطرها \(\varepsilon\) داخل النصف الأيمن؛ فيُستثنى القطب من \(P\)، ويضيف المسار قوساً بزاوية \(m_0\cdot 180^\circ\) باتجاه عقارب الساعة (نصف قطره لانهائي في المخطط).</li>
+          <li>ارسم أسهماً باتجاه زيادة \(\omega\) على المسار كاملاً.</li>
+        </ol>
+        <div class="fig">
+          <svg viewBox="0 0 360 270" width="420" role="img" aria-label="مسار نايكوست في المستوى s">
+            <defs><marker id="ah2" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#38bdf8"/></marker></defs>
+            <path d="M120 255L120 146A16 16 0 0 0 120 114L120 15A120 120 0 0 1 120 255" fill="rgba(56,189,248,.08)" stroke="#38bdf8" stroke-width="2.4"/>
+            <line x1="12" y1="130" x2="350" y2="130" stroke="#31468a"/><line x1="120" y1="5" x2="120" y2="265" stroke="#31468a" stroke-opacity=".0"/>
+            <line x1="120" y1="200" x2="120" y2="188" stroke="#38bdf8" stroke-width="2.4" marker-end="url(#ah2)"/>
+            <line x1="120" y1="75" x2="120" y2="63" stroke="#38bdf8" stroke-width="2.4" marker-end="url(#ah2)"/>
+            <line x1="236" y1="100" x2="240" y2="112" stroke="#38bdf8" stroke-width="2.4" marker-end="url(#ah2)"/>
+            <circle cx="120" cy="130" r="3.5" fill="#ff4d5e"/>
+            <text x="338" y="122" fill="#9aaace" font-size="12" direction="ltr">σ</text><text x="128" y="14" fill="#9aaace" font-size="12" direction="ltr">jω</text>
+            <text x="190" y="60" fill="#67e8f9" font-size="12.5" direction="ltr">R → ∞</text>
+            <text x="138" y="124" fill="#ff8a95" font-size="12" direction="ltr">ε</text>
+            <text x="22" y="40" fill="#9aaace" font-size="12.5">المحور jω</text>
+            <text x="160" y="150" fill="#b79cff" font-size="12.5">RHP (نصف المستوى الأيمن)</text>
+          </svg>
+        </div>
+        <div class="fig-cap">مسار نايكوست في المستوى s: المحور jω ثم قوس كبير في RHP، مع التفاف صغير حول القطب عند الأصل</div>
+      </div>
+    </details>
+
+    <details class="lq">
+      <summary>٦. ما أهمية النقطة الحرجة (−1, 0)؟</summary>
+      <div class="lq-b">
+        <p>أقطاب الحلقة المغلقة (تغذية سالبة أحادية) هي جذور المعادلة المميِّزة:</p>
+        <div class="eqb">$$1+L(s)=0\iff L(s)=-1$$</div>
+        <p>فالنقطة \(-1+j0\) هي المكان الذي تتحول عنده الحلقة المفتوحة إلى قطب مغلق. ومعيار نايكوست يربط عدد إحاطات المنحنى بهذه النقطة بعدد الأقطاب غير المستقرة. بالاصطلاح المعتمد هنا (الإحاطة مع عقارب الساعة موجبة):</p>
+        <div class="eqb">$$N=Z-P\qquad\Longleftrightarrow\qquad Z=N+P$$</div>
+        <ul>
+          <li>\(Z\): عدد أقطاب الحلقة المغلقة في النصف الأيمن (RHP).</li>
+          <li>\(P\): عدد أقطاب الحلقة المفتوحة في RHP.</li>
+          <li>\(N\): عدد الإحاطات الصافية للنقطة \((-1,0)\) باتجاه عقارب الساعة.</li>
+        </ul>
+        <p>يكون النظام مستقراً إذا وفقط إذا \(Z=0\). وإذا مرّ المنحنى بالنقطة \((-1,0)\) نفسها فهناك أقطاب مغلقة على المحور التخيلي (استقرار حدي) ولا يكون \(N\) معرّفاً.</p>
+      </div>
+    </details>
+
+    <details class="lq">
+      <summary>٧. ما استخدامات مخطط نايكوست؟</summary>
+      <div class="lq-b">
+        <ul>
+          <li>الحكم على استقرار الحلقة المغلقة، بما في ذلك الأنظمة ذات الأقطاب غير المستقرة في الحلقة المفتوحة.</li>
+          <li>قياس الاستقرار النسبي: هامش الربح <span class="en">GM</span> وهامش الطور <span class="en">PM</span>، وبُعد المنحنى عن النقطة (−1,0).</li>
+          <li>تحليل الأنظمة التي يصعب فيها استخدام طرق الأقطاب، مثل الأنظمة ذات التأخير الزمني، لأن الاستجابة الترددية تُقاس تجريبياً أيضاً.</li>
+          <li>تصميم المعوّضات <span class="en">(Lead / Lag)</span> بمراقبة تأثيرها على شكل المنحنى.</li>
+          <li>تقدير متانة التصميم أمام تغيّر الربح أو الطور في النموذج.</li>
+        </ul>
+      </div>
+    </details>
+
+  </div>
+</section>
+
+<!-- ================= التجارب العملية ================= -->
+<section id="exps" class="sec">
+  <div class="sec-head">
+    <h2>التجارب العملية <span class="en">Experiments</span></h2>
+    <p>ثلاث تجارب قصيرة. نفّذ الخطوات ثم اقرأ التفسير، فهو يتحدث بالأرقام التي تراها الآن.</p>
+  </div>
+  <div class="tabs" id="exTabs">
+    <button class="tab on" data-i="0">التجربة ١: نظام من الرتبة الأولى</button>
+    <button class="tab" data-i="1">التجربة ٢: مقارنة نظامين</button>
+    <button class="tab" data-i="2">التجربة ٣: قطب عند الأصل وتأثير K</button>
+  </div>
+
+  <!-- التجربة 1 -->
+  <div class="expp" id="ex0">
+    <div class="ex-grid">
+      <div class="panel"><div class="panel-h">\(H(s)=\dfrac{1}{s+1}\) <small>K = 1</small></div><div class="panel-b">
+        <ol class="steps">
+          <li>حرّك شريط التردد من القيمة الصغرى إلى الكبرى وراقب النقطة الصفراء.</li>
+          <li>اضبط ω = 1 وسجّل المقدار والطور.</li>
+          <li>أعد التحريك إلى ω كبير وراقب الاتجاه الذي تتجه إليه النقطة.</li>
+        </ol>
+        <div class="field"><label>التردد <span class="en">ω (rad/s)</span><b class="ltr" id="ex0W">1.000</b></label>
+          <input type="range" id="ex0T" min="-2" max="2" step="0.01" value="0"></div>
+        <label class="check"><input type="checkbox" id="ex0Neg" checked> إظهار الترددات السالبة</label>
+        <div class="kv-grid" id="ex0Out"></div>
+        <div class="btn-row"><button class="btn small" id="ex0Reset">إعادة ضبط</button></div>
+      </div></div>
+      <div class="panel"><div class="panel-h">مخطط Nyquist</div><div class="plot sm" id="plotEx0"></div></div>
+    </div>
+    <div class="callout"><h4>التفسير العلمي</h4><div id="ex0Why"></div></div>
+  </div>
+
+  <!-- التجربة 2 -->
+  <div class="expp" id="ex1" hidden>
+    <div class="ex-grid">
+      <div class="panel"><div class="panel-h">\(H_1=\dfrac{1}{s+1}\) مقابل \(H_2=\dfrac{5}{s+5}\)</div><div class="panel-b">
+        <ol class="steps">
+          <li>حرّك التردد وقارن موضع النقطتين: الزرقاء للنظام الأول والبنفسجية للثاني.</li>
+          <li>لاحظ أن المنحنيين ينطبقان، وأن الاختلاف في موضع النقطة عند التردد نفسه.</li>
+          <li>اضبط ω = 5 وقارن الطور في النظامين.</li>
+        </ol>
+        <div class="field"><label>التردد <span class="en">ω (rad/s)</span><b class="ltr" id="ex1W">1.000</b></label>
+          <input type="range" id="ex1T" min="-2" max="2" step="0.01" value="0"></div>
+        <table class="cmp" id="ex1Tbl"></table>
+        <div class="btn-row"><button class="btn small" id="ex1Reset">إعادة ضبط</button></div>
+      </div></div>
+      <div class="panel"><div class="panel-h">مخطط Nyquist للنظامين <small>H₁ خط متصل · H₂ خط متقطع</small></div><div class="plot sm" id="plotEx1"></div></div>
+    </div>
+    <div class="callout"><h4>التفسير العلمي</h4><div id="ex1Why"></div></div>
+  </div>
+
+  <!-- التجربة 3 -->
+  <div class="expp" id="ex2" hidden>
+    <div class="ex-grid">
+      <div class="panel"><div class="panel-h">\(G(s)=\dfrac{K}{s(s+1)(s+2)}\)</div><div class="panel-b">
+        <ol class="steps">
+          <li>ابدأ من K = 2 ولاحظ أن المنحنى لا يلتف حول (−1,0).</li>
+          <li>ارفع K تدريجياً حتى يمرّ المنحنى بالنقطة الحمراء (استقرار حدي).</li>
+          <li>تجاوز تلك القيمة وراقب قيمة N والنتيجة.</li>
+        </ol>
+        <div class="field"><label>ربح الحلقة <span class="en">K</span><b class="ltr" id="ex2K">2.0</b></label>
+          <input type="range" id="ex2Kr" min="0.1" max="20" step="0.1" value="2"></div>
+        <div class="quick"><button class="btn small" data-k="2">K = 2</button><button class="btn small" data-k="6">K = 6</button><button class="btn small" data-k="10">K = 10</button></div>
+        <div id="ex2Badge" class="badge b-undetermined" style="margin-top:14px"><i></i><span>–</span></div>
+        <div class="kv-grid" id="ex2Out" style="margin-top:10px"></div>
+        <div class="btn-row"><button class="btn small" id="ex2Reset">إعادة ضبط</button></div>
+      </div></div>
+      <div class="panel"><div class="panel-h">مخطط Nyquist <small>القوس المتقطع: التفاف توضيحي حول القطب عند الأصل</small></div><div class="plot sm" id="plotEx2"></div></div>
+    </div>
+    <div class="callout"><h4>التفسير العلمي</h4><div id="ex2Why"></div></div>
+  </div>
+</section>
+
+<!-- ================= المقارنة Nyquist / Bode ================= -->
+<section id="compare" class="sec">
+  <div class="sec-head">
+    <h2>المقارنة بين Nyquist و Bode <span class="en">Nyquist vs Bode</span></h2>
+    <p>النظام نفسه في تمثيلين. التحكم هنا مرتبط بالمختبر أعلاه، فتغيير أحدهما يغيّر الآخر.</p>
+  </div>
+  <div class="panel"><div class="panel-b cmp-ctl">
+    <div class="field" style="margin:0"><label>النظام</label><select id="cmpSys" aria-label="اختيار النظام"></select></div>
+    <div class="field" style="margin:0"><label>ربح الحلقة <span class="en">K</span><b class="ltr out-K">1.0</b></label>
+      <input type="range" class="bind-K" min="0.1" max="20" step="0.1" value="1" aria-label="قيمة K"></div>
+    <div class="field" style="margin:0"><label>التردد <span class="en">ω (rad/s)</span><b class="ltr out-W">1.000</b></label>
+      <input type="range" class="bind-T" min="-2" max="2" step="0.01" value="0" aria-label="التردد ω"></div>
+  </div></div>
+  <div class="cmp-grid">
+    <div class="panel"><div class="panel-h">Nyquist <button class="btn small" id="btnPngN">PNG</button></div><div class="plot sm" id="plotCmpN"></div></div>
+    <div class="panel"><div class="panel-h">Bode <button class="btn small" id="btnPngB">PNG</button></div><div class="plot bode" id="plotCmpB"></div></div>
+  </div>
+  <div class="margins" id="margins"></div>
+  <div class="callout">
+    <h4>كيف نقرأ التمثيلين معاً؟</h4>
+    <p>دائرة الوحدة المنقّطة في Nyquist تقابل خط 0 dB في Bode: حيث يقطعها المنحنى يكون \(|L|=1\) عند التردد \(\omega_{gc}\)، وهامش الطور \(PM=180^\circ+\angle L(j\omega_{gc})\).</p>
+    <p>عبور المنحنى للمحور الحقيقي السالب يقابل خط \(-180^\circ\) في Bode عند \(\omega_{pc}\)، وهامش الربح \(GM=-20\log_{10}|L(j\omega_{pc})|\) بالديسيبل.</p>
+    <p class="note">يعرض Bode المقدار والطور منفصلين على مقياس لوغاريتمي، بينما يجمعهما Nyquist في منحنى واحد يجيب عن سؤال الاستقرار مباشرة. هوامش GM وPM مفيدة للأنظمة ذات السلوك النموذجي؛ والحكم النهائي يُؤخذ من معيار نايكوست أعلاه.</p>
+  </div>
+</section>
+
+</main>
+
+<footer><div class="wrap">Nyquist Lab · جميع المنحنيات والنتائج تُحسب في المتصفح من دوال التحويل مباشرة، ولا توجد صور جاهزة.</div></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script>
+/*MATH-START*/
+/* =====================================================================
+   ١) الحسابات الرياضية: أعداد مركّبة، جذور كثيرات الحدود، تحليل نايكوست
+   ===================================================================== */
+const C = {
+  add:(a,b)=>({re:a.re+b.re,im:a.im+b.im}),
+  mul:(a,b)=>({re:a.re*b.re-a.im*b.im,im:a.re*b.im+a.im*b.re}),
+  div:(a,b)=>{const d=b.re*b.re+b.im*b.im;return{re:(a.re*b.re+a.im*b.im)/d,im:(a.im*b.re-a.re*b.im)/d};},
+  sub:(a,b)=>({re:a.re-b.re,im:a.im-b.im}),
+  abs:a=>Math.hypot(a.re,a.im),
+  arg:a=>Math.atan2(a.im,a.re),
+  conj:a=>({re:a.re,im:-a.im}),
+  scale:(a,k)=>({re:a.re*k,im:a.im*k}),
+  polar:(r,t)=>({re:r*Math.cos(t),im:r*Math.sin(t)})
+};
+// تقييم كثير حدود (المعاملات من الأعلى رتبة إلى الأدنى) عند عدد مركّب s
+function polyEval(c,s){let r={re:0,im:0};for(const k of c)r=C.add(C.mul(r,s),{re:k,im:0});return r;}
+// L(s) = K * num(s)/den(s)
+function Lval(sys,K,s){return C.scale(C.div(polyEval(sys.num,s),polyEval(sys.den,s)),K);}
+
+// جذور كثير حدود حقيقي المعاملات (طريقة Durand–Kerner) مع استخراج الجذور الصفرية بدقة
+function polyRoots(coef){
+  const c=coef.slice();
+  while(c.length>1&&Math.abs(c[0])<1e-14)c.shift();
+  const roots=[];
+  while(c.length>1&&Math.abs(c[c.length-1])<1e-14){c.pop();roots.push({re:0,im:0});}
+  const n=c.length-1;
+  if(n<1)return roots;
+  const a=c.map(x=>x/c[0]);
+  const R=1+Math.max(...a.slice(1).map(Math.abs));
+  const seed={re:0.4,im:0.9};
+  let z=[],p={re:1,im:0};
+  for(let k=0;k<n;k++){z.push(C.scale(p,Math.min(R,6)/1.2));p=C.mul(p,seed);}
+  for(let it=0;it<3000;it++){
+    let delta=0;
+    for(let i=0;i<n;i++){
+      let den={re:1,im:0};
+      for(let j=0;j<n;j++)if(j!==i)den=C.mul(den,C.sub(z[i],z[j]));
+      const step=C.div(polyEval(a,z[i]),den);
+      z[i]=C.sub(z[i],step);
+      delta=Math.max(delta,C.abs(step));
+    }
+    if(delta<1e-15)break;
+  }
+  return roots.concat(z.map(r=>({
+    re:Math.abs(r.re)<1e-9?0:r.re,
+    im:Math.abs(r.im)<1e-6*Math.max(1,Math.abs(r.re))?0:r.im
+  })));
+}
+
+/* النماذج الجاهزة: L(s)=K·num/den، المعاملات من الأعلى رتبة */
+const SYSTEMS=[
+  {id:0,num:[1],den:[1,1],m0:0,short:'1/(s+1)',
+   tex:'\\dfrac{1}{s+1}',texL:'L(s)=K\\,\\dfrac{1}{s+1}',tag:'رتبة أولى'},
+  {id:1,num:[1],den:[1,2,1],m0:0,short:'1/(s²+2s+1)',
+   tex:'\\dfrac{1}{s^2+2s+1}',texL:'L(s)=K\\,\\dfrac{1}{s^2+2s+1}',tag:'رتبة ثانية · قطب مضاعف عند −1'},
+  {id:2,num:[1],den:[1,3,2,0],m0:1,short:'K/[s(s+1)(s+2)]',
+   tex:'\\dfrac{K}{s(s+1)(s+2)}',texL:'L(s)=\\dfrac{K}{s(s+1)(s+2)}',tag:'قطب عند الأصل'},
+  {id:3,num:[5],den:[1,5],m0:0,short:'5/(s+5)',
+   tex:'\\dfrac{5}{s+5}',texL:'L(s)=K\\,\\dfrac{5}{s+5}',tag:'رتبة أولى · أسرع'}
+];
+SYSTEMS.forEach(s=>{s.zr=polyRoots(s.num);s.pl=polyRoots(s.den);});
+
+// الطور المتصل (بالدرجات) = مجموع زوايا الأصفار − مجموع زوايا الأقطاب (بدون قفزات 360°)
+function phaseDeg(sys,K,w){
+  let ph=(K*sys.num[0]>0)?0:Math.PI;
+  for(const z of sys.zr)ph+=Math.atan2(w-z.im,-z.re);
+  for(const p of sys.pl)ph-=Math.atan2(w-p.im,-p.re);
+  return ph*180/Math.PI;
+}
+
+/* عدد الإحاطات الصافية باتجاه عقارب الساعة حول (-1,0) لمسار نايكوست الكامل:
+   ω من -∞ إلى +∞ على المحور jω، مع نصف دائرة صغيرة (نصف قطر ε) إلى اليمين حول أي قطب عند الأصل.
+   القوس الكبير في RHP يقابل نقطة ثابتة لأن L(s) سليمة صارمة (Strictly proper). */
+function windingN(sys,K,m0){
+  const NP=5000,lo=-4,hi=4,eps=1e-4;
+  const ws=[];if(m0===0)ws.push(0);
+  for(let i=0;i<NP;i++)ws.push(Math.pow(10,lo+(hi-lo)*i/(NP-1)));
+  const zp=ws.map(w=>Lval(sys,K,{re:0,im:w}));
+  const seq=[];
+  for(let i=zp.length-1;i>=0;i--)seq.push(C.conj(zp[i]));      // ω من -∞ إلى 0⁻
+  if(m0>0){const M=400;for(let j=0;j<=M;j++){const th=-Math.PI/2+Math.PI*j/M;seq.push(Lval(sys,K,C.polar(eps,th)));}}
+  for(const z of zp)seq.push(z);                                 // ω من 0⁺ إلى +∞
+  let tot=0,prev=Math.atan2(seq[0].im,seq[0].re+1),minD=Infinity;
+  for(let i=1;i<seq.length;i++){
+    const a=Math.atan2(seq[i].im,seq[i].re+1);
+    let d=a-prev;while(d>Math.PI)d-=2*Math.PI;while(d<=-Math.PI)d+=2*Math.PI;
+    tot+=d;prev=a;minD=Math.min(minD,Math.hypot(seq[i].re+1,seq[i].im));
+  }
+  const raw=-tot/(2*Math.PI);          // موجب = مع عقارب الساعة
+  const N=Math.round(raw);
+  return{raw,N,ok:Math.abs(raw-N)<0.05,minD};
+}
+
+const TOL=1e-6;
+function classify(list){
+  return{rhp:list.filter(p=>p.re>TOL).length,axis:list.filter(p=>Math.abs(p.re)<=TOL),lhp:list.filter(p=>p.re<-TOL).length};
+}
+/* التحليل الكامل: P, N, Z, النتيجة. الأقطاب المغلقة هي جذور den + K·num للتحقق المستقل */
+function analyze(sys,K){
+  const olPoles=polyRoots(sys.den);
+  const ch=sys.den.slice(),n=ch.length;
+  for(let i=0;i<sys.num.length;i++)ch[n-sys.num.length+i]+=K*sys.num[i];
+  const clPoles=polyRoots(ch);
+  const ol=classify(olPoles),cl=classify(clPoles);
+  const m0=olPoles.filter(p=>C.abs(p)<=TOL).length;
+  const otherAxis=ol.axis.filter(p=>C.abs(p)>TOL);
+  const P=ol.rhp;
+  const R={olPoles,clPoles,P,m0,clRHP:cl.rhp,clAxis:cl.axis,otherAxis,N:null,Z:null,status:'undetermined',reason:''};
+  if(otherAxis.length>0){
+    R.status='undetermined';R.reason='axisPoles';return R;
+  }
+  if(cl.axis.length>0){
+    R.status=cl.rhp>0?'unstable':'marginal';R.reason='throughCritical';R.Z=cl.rhp;return R;
+  }
+  const W=windingN(sys,K,m0);
+  R.Nraw=W.raw;R.N=W.N;R.Z=W.N+P;
+  if(!W.ok||R.Z!==cl.rhp){R.status='undetermined';R.reason='mismatch';return R;}
+  R.status=R.Z===0?'stable':'unstable';
+  return R;
+}
+
+/* هوامش الاستقرار من الاستجابة الترددية (أول تقاطع) */
+function margins(sys,K){
+  const n=2500,lo=-3,hi=3.5;let prev=null,gc=null,pc=null;
+  for(let i=0;i<n;i++){
+    const lw=lo+(hi-lo)*i/(n-1),w=Math.pow(10,lw);
+    const db=20*Math.log10(C.abs(Lval(sys,K,{re:0,im:w}))),ph=phaseDeg(sys,K,w);
+    if(prev){
+      if(!gc&&prev.db>=0&&db<0){const t=prev.db/(prev.db-db);gc={w:Math.pow(10,prev.lw+t*(lw-prev.lw)),ph:prev.ph+t*(ph-prev.ph)};}
+      if(!pc&&prev.ph>-180&&ph<=-180){const t=(prev.ph+180)/(prev.ph-ph);pc={w:Math.pow(10,prev.lw+t*(lw-prev.lw)),db:prev.db+t*(db-prev.db)};}
+    }
+    prev={lw,w,db,ph};
+  }
+  return{gc:gc?{w:gc.w,pm:180+gc.ph}:null,pc:pc?{w:pc.w,gm:-pc.db}:null};
+}
+/*MATH-END*/
+
+/* =====================================================================
+   ٢) أدوات التنسيق والرسم
+   ===================================================================== */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const hasPlotly=!!window.Plotly,hasKatex=!!window.katex;
+const fmt=(x,d=3)=>{if(!isFinite(x))return '∞';const s=x.toFixed(d);return Number(s)===0?(0).toFixed(d):s;};
+const cfmt=p=>Math.abs(p.im)<1e-9?fmt(p.re,3):`${fmt(p.re,3)} ${p.im>=0?'+':'−'} ${fmt(Math.abs(p.im),3)}j`;
+const tex=(el,s)=>{if(hasKatex)katex.render(s,el,{throwOnError:false});else el.textContent=s;};
+const PLC={cyan:'#38bdf8',violet:'#8b5cf6',violet2:'#b79cff',red:'#ff4d5e',amber:'#fbbf24',green:'#3ddc97',grid:'rgba(154,170,206,.13)',zero:'rgba(154,170,206,.42)',bg:'#0b1330'};
+const FONT={family:"'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif",color:'#cbd5e6',size:13};
+const CFG={responsive:true,displaylogo:false,scrollZoom:true,modeBarButtonsToRemove:['select2d','lasso2d','autoScale2d'],
+  toImageButtonOptions:{format:'png',filename:'nyquist-lab',width:1400,height:1000,scale:1}};
+function draw(div,fig,fresh){
+  if(!hasPlotly)return;
+  if(fresh)Plotly.newPlot(div,fig.data,fig.layout,CFG);else Plotly.react(div,fig.data,fig.layout,CFG);
+}
+function logspace(a,b,n){const r=[];for(let i=0;i<n;i++)r.push(Math.pow(10,a+(b-a)*i/(n-1)));return r;}
+
+/* نقاط المنحنى للترددات الموجبة (النظام ذو القطب عند الأصل يبدأ من ω=0.01) */
+function curveData(sys,K){
+  const ws=sys.m0>0?logspace(-2,3,1400):[0].concat(logspace(-3,3,1400));
+  const pts=ws.map(w=>{const z=Lval(sys,K,{re:0,im:w}),m=C.abs(z);return{w,re:z.re,im:z.im,mag:m,db:20*Math.log10(m),ph:phaseDeg(sys,K,w)};});
+  const wref=sys.m0>0?0.6:0;let ext=0;
+  for(const p of pts)if(p.w>=wref&&p.mag>ext)ext=p.mag;
+  return{pts,ext};
+}
+
+/* ===== رسم Nyquist =====
+   curves: [{sys,K,color,name,dash,arrows,wMark,markColor,markName}] */
+function nyquistFigure(curves,o={}){
+  const showNeg=o.showNeg!==false,data=[],ann=[];
+  curves.forEach(c=>{c.cd=curveData(c.sys,c.K);});
+  const ext=Math.max(...curves.map(c=>c.cd.ext)),lim=Math.max(1.6,1.25*ext);
+  let x0=-1,x1=0,y0=0,y1=0;
+  const grow=(x,y)=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);};
+  const hov=(sign)=>'ω = %{customdata[0]:.3f} rad/s<br>Re = %{x:.4f}<br>Im = %{y:.4f}<br>|L| = %{customdata[1]:.4f} (%{customdata[2]:.2f} dB)<br>∠L = %{customdata[3]:.2f}°<extra></extra>';
+
+  function arrows(vis,color,mirror){
+    if(vis.length<6)return;
+    const cum=[0];for(let i=1;i<vis.length;i++)cum.push(cum[i-1]+Math.hypot(vis[i].re-vis[i-1].re,vis[i].im-vis[i-1].im));
+    const tot=cum[cum.length-1];if(tot<1e-9)return;
+    [0.2,0.5,0.8].forEach(fr=>{
+      let i=cum.findIndex(v=>v>=fr*tot);if(i<1)i=1;
+      let j=i;while(j<vis.length-1&&cum[j]-cum[i]<0.02*tot)j++;
+      const a=vis[i],b=vis[j];
+      let tail={x:a.re,y:a.im},head={x:b.re,y:b.im};
+      if(mirror){tail={x:b.re,y:-b.im};head={x:a.re,y:-a.im};}   // على الفرع السالب ω تزيد باتجاه الصفر
+      ann.push({x:head.x,y:head.y,ax:tail.x,ay:tail.y,xref:'x',yref:'y',axref:'x',ayref:'y',showarrow:true,arrowhead:3,arrowsize:1.35,arrowwidth:2.4,arrowcolor:color,text:''});
+    });
+  }
+
+  // دائرة الوحدة (مرجع لهامش الطور)
+  const th=[];for(let i=0;i<=120;i++)th.push(2*Math.PI*i/120);
+  data.push({x:th.map(Math.cos),y:th.map(Math.sin),mode:'lines',line:{color:'rgba(154,170,206,.45)',width:1,dash:'dot'},hoverinfo:'skip',showlegend:false});
+
+  curves.forEach((c,ci)=>{
+    const P=c.cd.pts,vis=P.filter(p=>p.mag<=lim);
+    vis.forEach(p=>{grow(p.re,p.im);if(showNeg)grow(p.re,-p.im);});
+    data.push({x:P.map(p=>p.re),y:P.map(p=>p.im),customdata:P.map(p=>[p.w,p.mag,p.db,p.ph]),mode:'lines',
+      name:(c.name||'ω ≥ 0'),line:{color:c.color,width:c.dash?2.6:3.4,dash:c.dash||'solid'},hovertemplate:hov()});
+    if(showNeg)data.push({x:P.map(p=>p.re),y:P.map(p=>-p.im),customdata:P.map(p=>[-p.w,p.mag,p.db,-p.ph]),mode:'lines',
+      name:(c.name?c.name+' (ω<0)':'ω ≤ 0'),line:{color:c.color,width:2,dash:'dash'},opacity:.6,hovertemplate:hov()});
+    if(c.arrows){arrows(vis,c.color,false);if(showNeg)arrows(vis,c.color,true);}
+  });
+
+  // قوس الالتفاف حول القطب عند الأصل (توضيحي، نصف قطره لانهائي في الحقيقة)
+  const m0=Math.max(...curves.map(c=>c.sys.m0));
+  if(m0>0&&showNeg){
+    const R=Math.max(1,0.92*Math.max(Math.abs(y0),Math.abs(y1))),a0=m0*Math.PI/2,ax=[],ay=[];
+    for(let i=0;i<=120;i++){const a=a0-m0*Math.PI*i/120;ax.push(R*Math.cos(a));ay.push(R*Math.sin(a));grow(ax[i],ay[i]);}
+    data.push({x:ax,y:ay,mode:'lines',name:'قوس الأصل (توضيحي)',line:{color:PLC.violet2,width:2,dash:'dashdot'},hoverinfo:'skip'});
+    const k=60;ann.push({x:ax[k+2],y:ay[k+2],ax:ax[k-2],ay:ay[k-2],xref:'x',yref:'y',axref:'x',ayref:'y',showarrow:true,arrowhead:3,arrowsize:1.3,arrowwidth:2.2,arrowcolor:PLC.violet2,text:''});
+  }
+
+  // النقطة الحرجة
+  data.push({x:[-1],y:[0],mode:'markers',showlegend:false,hoverinfo:'skip',marker:{size:26,color:'rgba(255,77,94,.18)',line:{color:PLC.red,width:1.5}}});
+  data.push({x:[-1],y:[0],mode:'markers+text',name:'النقطة الحرجة (−1, 0)',text:['(−1, 0)'],textposition:'bottom left',textfont:{color:'#ff8a95',size:13},
+    marker:{symbol:'x',size:13,color:PLC.red,line:{color:PLC.red,width:3.5}},hovertemplate:'النقطة الحرجة (−1, 0)<extra></extra>'});
+
+  // نقطة التردد الحالي ومتجهها
+  curves.forEach(c=>{
+    if(c.wMark==null)return;
+    const z=Lval(c.sys,c.K,{re:0,im:c.wMark}),mc=c.markColor||PLC.amber;
+    data.push({x:[0,z.re],y:[0,z.im],mode:'lines',line:{color:mc,width:1.4,dash:'dot'},hoverinfo:'skip',showlegend:false});
+    const xs=[z.re],ys=[z.im];if(showNeg){xs.push(z.re);ys.push(-z.im);}
+    data.push({x:xs,y:ys,mode:'markers',name:c.markName||'النقطة الحالية',
+      marker:{symbol:'diamond',size:13,color:mc,line:{color:'#fff',width:1.6}},
+      hovertemplate:'ω = '+fmt(c.wMark,3)+' rad/s<br>Re = %{x:.4f}<br>Im = %{y:.4f}<extra></extra>'});
+    grow(z.re,z.im);if(showNeg)grow(z.re,-z.im);
+  });
+
+  const pad=Math.max(0.14*Math.max(x1-x0,y1-y0),0.3);
+  const ax=(t)=>({title:{text:t,standoff:8},gridcolor:PLC.grid,zerolinecolor:PLC.zero,zerolinewidth:1.6,linecolor:PLC.zero,constrain:'range'});
+  const layout={
+    paper_bgcolor:PLC.bg,plot_bgcolor:PLC.bg,font:FONT,margin:{l:58,r:20,t:20,b:62},
+    xaxis:Object.assign(ax('Re — المحور الحقيقي (Real Axis)'),{range:[x0-pad,x1+pad]}),
+    yaxis:Object.assign(ax('Im — المحور التخيلي (Imaginary Axis)'),{range:[y0-pad,y1+pad],scaleanchor:'x',scaleratio:1}),
+    legend:{orientation:'h',x:0.5,xanchor:'center',y:-0.2,font:{size:12}},
+    annotations:ann,dragmode:'pan',uirevision:o.rev||'r',
+    hoverlabel:{bgcolor:'#0f1a3a',bordercolor:PLC.cyan,font:{family:FONT.family,color:'#e8eefc',size:13}}
+  };
+  return{data,layout};
+}
+
+/* ===== رسم Bode ===== */
+function bodeFigure(sys,K,wm){
+  const W=logspace(-2,3,600),M=[],Ph=[];
+  W.forEach(w=>{M.push(20*Math.log10(C.abs(Lval(sys,K,{re:0,im:w}))));Ph.push(phaseDeg(sys,K,w));});
+  const mm=margins(sys,K),data=[];
+  const mlo=Math.min(...M)-6,mhi=Math.max(...M)+6,plo=Math.min(...Ph,-180)-15,phi=Math.max(...Ph,0)+15;
+  data.push({x:[0.01,1000],y:[0,0],xaxis:'x',yaxis:'y',mode:'lines',line:{color:'rgba(255,77,94,.7)',width:1.3,dash:'dash'},hoverinfo:'skip',showlegend:false});
+  data.push({x:[0.01,1000],y:[-180,-180],xaxis:'x2',yaxis:'y2',mode:'lines',line:{color:'rgba(255,77,94,.7)',width:1.3,dash:'dash'},hoverinfo:'skip',showlegend:false});
+  data.push({x:W,y:M,xaxis:'x',yaxis:'y',mode:'lines',name:'|L| (dB)',line:{color:PLC.cyan,width:3},hovertemplate:'ω = %{x:.3f} rad/s<br>%{y:.2f} dB<extra></extra>',showlegend:false});
+  data.push({x:W,y:Ph,xaxis:'x2',yaxis:'y2',mode:'lines',name:'∠L',line:{color:PLC.violet2,width:3},hovertemplate:'ω = %{x:.3f} rad/s<br>%{y:.2f}°<extra></extra>',showlegend:false});
+  // خطوط التردد الحالي
+  data.push({x:[wm,wm],y:[mlo,mhi],xaxis:'x',yaxis:'y',mode:'lines',line:{color:'rgba(251,191,36,.75)',width:1.5,dash:'dot'},hoverinfo:'skip',showlegend:false});
+  data.push({x:[wm,wm],y:[plo,phi],xaxis:'x2',yaxis:'y2',mode:'lines',line:{color:'rgba(251,191,36,.75)',width:1.5,dash:'dot'},hoverinfo:'skip',showlegend:false});
+  const zm=Lval(sys,K,{re:0,im:wm});
+  data.push({x:[wm],y:[20*Math.log10(C.abs(zm))],xaxis:'x',yaxis:'y',mode:'markers',marker:{symbol:'diamond',size:12,color:PLC.amber,line:{color:'#fff',width:1.5}},hovertemplate:'ω = '+fmt(wm,3)+'<br>%{y:.2f} dB<extra></extra>',showlegend:false});
+  data.push({x:[wm],y:[phaseDeg(sys,K,wm)],xaxis:'x2',yaxis:'y2',mode:'markers',marker:{symbol:'diamond',size:12,color:PLC.amber,line:{color:'#fff',width:1.5}},hovertemplate:'ω = '+fmt(wm,3)+'<br>%{y:.2f}°<extra></extra>',showlegend:false});
+  if(mm.gc)data.push({x:[mm.gc.w],y:[0],xaxis:'x',yaxis:'y',mode:'markers+text',text:['ω_gc'],textposition:'top right',textfont:{color:PLC.green},marker:{size:10,color:PLC.green},hovertemplate:'ω_gc = %{x:.3f}<extra></extra>',showlegend:false});
+  if(mm.pc)data.push({x:[mm.pc.w],y:[-180],xaxis:'x2',yaxis:'y2',mode:'markers+text',text:['ω_pc'],textposition:'top right',textfont:{color:PLC.violet2},marker:{size:10,color:PLC.violet2},hovertemplate:'ω_pc = %{x:.3f}<extra></extra>',showlegend:false});
+  const lx=(t,extra)=>Object.assign({type:'log',range:[-2,3],gridcolor:PLC.grid,linecolor:PLC.zero,zeroline:false,title:t?{text:t,standoff:6}:undefined},extra||{});
+  const layout={
+    paper_bgcolor:PLC.bg,plot_bgcolor:PLC.bg,font:FONT,margin:{l:64,r:18,t:16,b:54},
+    xaxis:lx(null,{anchor:'y',showticklabels:false}),
+    yaxis:{domain:[0.56,1],title:{text:'|L| (dB)',standoff:6},gridcolor:PLC.grid,linecolor:PLC.zero,zeroline:false,range:[mlo,mhi]},
+    xaxis2:lx('ω (rad/s) — التردد',{anchor:'y2',matches:'x'}),
+    yaxis2:{domain:[0,0.44],title:{text:'∠L (°)',standoff:6},gridcolor:PLC.grid,linecolor:PLC.zero,zeroline:false,dtick:45,range:[plo,phi]},
+    dragmode:'pan',uirevision:'b'+sys.id+'|'+K,
+    hoverlabel:{bgcolor:'#0f1a3a',bordercolor:PLC.cyan,font:{family:FONT.family,color:'#e8eefc',size:13}}
+  };
+  return{data,layout,mm};
+}
+
+/* =====================================================================
+   ٣) الحالة العامة للمختبر وعناصر الواجهة
+   ===================================================================== */
+const DEF={sys:0,K:1,t:0,neg:true};
+const S=Object.assign({},DEF);
+const wNow=()=>Math.pow(10,S.t);
+const cache=new Map();
+function getA(sys,K){const k=sys.id+'|'+K;if(!cache.has(k))cache.set(k,analyze(sys,K));return cache.get(k);}
+
+/* ----- نص الاستقرارية ----- */
+const STATUS={
+  stable:{cls:'b-stable',label:'مستقر · Stable'},
+  unstable:{cls:'b-unstable',label:'غير مستقر · Unstable'},
+  marginal:{cls:'b-marginal',label:'استقرار حدي · Marginally stable'},
+  undetermined:{cls:'b-undetermined',label:'غير محسوم · Undetermined'}
+};
+function polesHtml(list){
+  return list.map(p=>`<span class="ltr${p.re>TOL?' rhp':''}">${cfmt(p)}</span>`).join('،&nbsp; ');
+}
+function explain(A,sys,K){
+  const L=[];
+  const num=x=>`<span class="ltr">${x}</span>`;
+  L.push(`<p>اصطلاح الإشارة: الإحاطة باتجاه عقارب الساعة حول <b>(−1, 0)</b> موجبة، ومنه: <span class="ltr">N = Z − P</span> أي <span class="ltr">Z = N + P</span>.</p>`);
+  if(A.m0>0)L.push(`<p>للنظام ${num('m₀ = '+A.m0)} قطب عند الأصل: نتفاداه بنصف دائرة صغيرة داخل RHP، فلا يُحسب ضمن P، ويضيف المسار قوساً لانهائي النصف قطر بزاوية ${num(A.m0*180+'°')} باتجاه عقارب الساعة (القوس المتقطع في المخطط توضيحي). عدد الأقطاب المفتوحة في RHP هو ${num('P = '+A.P)}.</p>`);
+  switch(A.status){
+    case 'stable':
+      L.push(`<div class="eq">${num(`Z = N + P = ${A.N} + ${A.P} = ${A.Z}`)}</div><p>لا يوجد أي قطب حلقة مغلقة في RHP، فالنظام <b>مستقر</b>. تحقق مستقل من جذور المعادلة المميِّزة <span class="ltr">den + K·num = 0</span> يعطي ${num(A.clRHP)} قطباً في RHP، وهذا يطابق النتيجة.</p>`);
+      break;
+    case 'unstable':
+      if(A.reason==='throughCritical')
+        L.push(`<p>يمر المنحنى بالنقطة (−1,0) وتوجد أيضاً أقطاب مغلقة في RHP عددها ${num(A.Z)} (من جذور المعادلة المميِّزة)، فالنظام <b>غير مستقر</b>. العدّ بالإحاطات غير معرّف هنا لأن المسار يمس النقطة الحرجة.</p>`);
+      else
+        L.push(`<div class="eq">${num(`Z = N + P = ${A.N} + ${A.P} = ${A.Z}`)}</div><p>يوجد ${num(A.Z)} من أقطاب الحلقة المغلقة في RHP، فالنظام <b>غير مستقر</b>. المنحنى يحيط بالنقطة (−1,0) ${num(Math.abs(A.N))} مرة${A.N>0?' باتجاه عقارب الساعة':' عكس عقارب الساعة'} (التحقق من الجذور يعطي ${num(A.clRHP)} قطباً في RHP).</p>`);
+      break;
+    case 'marginal':
+      L.push(`<p>المنحنى يمر بالنقطة الحرجة (−1,0): للمعادلة المميِّزة جذور على المحور التخيلي عند <span class="ltr">s = ${A.clAxis.filter(p=>p.im>=0).map(p=>'±j'+fmt(p.im,3)).join(' ، ') || '0'}</span>، ولا توجد أقطاب في RHP. النتيجة: <b>استقرار حدي</b> (تذبذب مستمر). قيمة N غير معرّفة لأن المسار يمر بالنقطة الحرجة نفسها.</p>`);
+      break;
+    default:
+      if(A.reason==='axisPoles')
+        L.push(`<p>يوجد قطب مفتوح الحلقة على المحور التخيلي غير الأصل (<span class="ltr">${A.otherAxis.map(cfmt).join('، ')}</span>). يحتاج المسار إلى قوس التفاف خاص حول كل قطب، لذلك لا يُعطى حكم تلقائي موثوق هنا.</p>`);
+      else
+        L.push(`<p>تعارض عددي بين عدّ الإحاطات (${num(fmt(A.Nraw,2))}) ونتيجة الجذور؛ لا يُعطى حكم موثوق. جرّب قيمة K مختلفة قليلاً.</p>`);
+  }
+  return L.join('');
+}
+function renderStability(sys){
+  const A=getA(sys,S.K),st=STATUS[A.status];
+  $('#stSysName').textContent='K = '+fmt(S.K,1)+' · '+sys.short;
+  $('#stP').textContent=A.P;$('#stM').textContent=A.m0;
+  $('#stN').textContent=A.N==null?'—':A.N;
+  $('#stZ').textContent=A.Z==null?'—':A.Z;
+  const b=$('#stBadge');b.className='badge '+st.cls;b.querySelector('span').textContent=st.label;
+  $('#stPoles').innerHTML=`<div>أقطاب الحلقة المفتوحة: ${polesHtml(A.olPoles)}</div><div>أقطاب الحلقة المغلقة: ${polesHtml(A.clPoles)}</div>`;
+  $('#stText').innerHTML=explain(A,sys,S.K);
+}
+function responseRows(sys,K,w){
+  const z=Lval(sys,K,{re:0,im:w}),mag=C.abs(z),ph=phaseDeg(sys,K,w);
+  return [
+    ['التردد ω',fmt(w,4)+' rad/s'],['التردد f = ω/2π',fmt(w/(2*Math.PI),4)+' Hz'],['نقطة الحساب s = jω','j'+fmt(w,4)],
+    ['الجزء الحقيقي Re',fmt(z.re,5)],['الجزء التخيلي Im',fmt(z.im,5)],
+    ['المقدار |L|',fmt(mag,5)],['المقدار بالديسيبل',fmt(20*Math.log10(mag),3)+' dB'],
+    ['الطور ∠L',fmt(ph,3)+'°'],['الطور بالراديان',fmt(ph*Math.PI/180,4)+' rad'],
+    ['البعد عن (−1,0): |1+L|',fmt(Math.hypot(1+z.re,z.im),4)]
+  ];
+}
+const rowsHtml=rows=>rows.map(([k,v])=>`<div class="kv"><span>${k}</span><b class="ltr">${v}</b></div>`).join('');
+
+function renderLab(fresh){
+  const sys=SYSTEMS[S.sys],w=wNow();
+  const fig=nyquistFigure([{sys,K:S.K,color:PLC.cyan,name:'ω ≥ 0',arrows:true,wMark:w}],{showNeg:S.neg,rev:S.sys+'|'+S.K+'|'+S.neg});
+  draw($('#plotLab'),fig,fresh);
+  $('#infoBox').innerHTML=rowsHtml(responseRows(sys,S.K,w));
+  tex($('#formulaLab'),sys.texL);
+  renderStability(sys);
+}
+function renderCompare(fresh){
+  const sys=SYSTEMS[S.sys],w=wNow();
+  draw($('#plotCmpN'),nyquistFigure([{sys,K:S.K,color:PLC.cyan,name:'ω ≥ 0',arrows:true,wMark:w}],{showNeg:S.neg,rev:'c'+S.sys+'|'+S.K+'|'+S.neg}),fresh);
+  const bf=bodeFigure(sys,S.K,w);draw($('#plotCmpB'),bf,fresh);
+  const mm=bf.mm;
+  const cell=(t,v,u)=>`<div class="num"><small>${t}</small><b class="ltr">${v}</b>${u?`<small style="min-height:0">${u}</small>`:''}</div>`;
+  $('#margins').innerHTML=
+    cell('تردد قطع الربح ω_gc',mm.gc?fmt(mm.gc.w,3):'—','rad/s')+
+    cell('هامش الطور PM',mm.gc?fmt(mm.gc.pm,1)+'°':'—',mm.gc?'':'|L| لا يقطع 0 dB')+
+    cell('تردد قطع الطور ω_pc',mm.pc?fmt(mm.pc.w,3):'—','rad/s')+
+    cell('هامش الربح GM',mm.pc?fmt(mm.pc.gm,2)+' dB':'∞',mm.pc?'':'الطور لا يبلغ −180°');
+}
+function update(fresh){
+  $$('.bind-K').forEach(e=>e.value=S.K);$$('.out-K').forEach(e=>e.textContent=fmt(S.K,1));
+  $$('.bind-T').forEach(e=>e.value=S.t);$$('.out-W').forEach(e=>e.textContent=fmt(wNow(),3));
+  $$('.bind-neg').forEach(e=>e.checked=S.neg);
+  $$('.sys-btn').forEach(b=>b.classList.toggle('on',+b.dataset.i===S.sys));
+  $('#cmpSys').value=S.sys;
+  renderLab(fresh);renderCompare(fresh);
+}
+
+/* ----- أحداث المختبر ----- */
+SYSTEMS.forEach(sys=>{
+  const b=document.createElement('button');b.className='sys-btn';b.dataset.i=sys.id;
+  b.innerHTML=`<span class="f"></span><span class="tag">${sys.tag}</span>`;
+  tex(b.querySelector('.f'),'H(s)='+sys.tex);
+  b.addEventListener('click',()=>{S.sys=sys.id;update();});
+  $('#sysList').appendChild(b);
+  const o=document.createElement('option');o.value=sys.id;o.textContent=sys.short;$('#cmpSys').appendChild(o);
+});
+$('#cmpSys').addEventListener('change',e=>{S.sys=+e.target.value;update();});
+$$('.bind-K').forEach(e=>e.addEventListener('input',()=>{S.K=+e.value;update();}));
+$$('.bind-T').forEach(e=>e.addEventListener('input',()=>{S.t=+e.value;update();}));
+$$('.bind-neg').forEach(e=>e.addEventListener('change',()=>{S.neg=e.checked;update();}));
+$('#btnReset').addEventListener('click',()=>{Object.assign(S,DEF);update(true);});
+const png=(id,name)=>()=>{if(hasPlotly)Plotly.downloadImage(id,{format:'png',width:1400,height:1000,filename:name});};
+$('#btnPng').addEventListener('click',png('plotLab','nyquist-plot'));
+$('#btnPngN').addEventListener('click',png('plotCmpN','nyquist-compare'));
+$('#btnPngB').addEventListener('click',png('plotCmpB','bode-plot'));
+
+/* =====================================================================
+   ٤) التجارب
+   ===================================================================== */
+const EXD={t0:0,n0:true,t1:0,k2:2};
+const EX={t0:0,n0:true,t1:0,k2:2};
+const E1=SYSTEMS[0],E2=SYSTEMS[3],E3=SYSTEMS[2];
+const num=x=>`<span class="ltr">${x}</span>`;
+
+function renderEx0(fresh){
+  const w=Math.pow(10,EX.t0),z=Lval(E1,1,{re:0,im:w});
+  $('#ex0W').textContent=fmt(w,3);
+  draw($('#plotEx0'),nyquistFigure([{sys:E1,K:1,color:PLC.cyan,name:'H(jω)',arrows:true,wMark:w}],{showNeg:EX.n0,rev:'e0'+EX.n0}),fresh);
+  const r=responseRows(E1,1,w).filter((_,i)=>[3,4,5,7].includes(i));
+  $('#ex0Out').innerHTML=rowsHtml(r);
+  const c=Math.pow(z.re-0.5,2)+z.im*z.im,A=getA(E1,1);
+  $('#ex0Why').innerHTML=
+   `<p>عند ω = ${num(fmt(w,3))} تقع النقطة عند ${num('('+fmt(z.re,4)+' , '+fmt(z.im,4)+')')} بمقدار ${num(fmt(C.abs(z),4))} وطور ${num(fmt(phaseDeg(E1,1,w),2)+'°')}.</p>`+
+   `<p>من الصيغة ${num('Re = 1/(1+ω²)')} و ${num('Im = −ω/(1+ω²)')} نحصل على ${num('(Re − ½)² + Im² = ¼')}؛ أي أن المنحنى نصف دائرة مركزها (0.5 , 0) ونصف قطرها 0.5. القيمة المحسوبة الآن ${num(fmt(c,6))} وهي تساوي 0.25 كما هو متوقع.</p>`+
+   `<p>عند ω → 0 تقترب النقطة من (1,0) (الربح المستقر = 1 والطور 0°). عند ω = 1 (التردد الركني) يكون المقدار 0.707 (−3 dB) والطور −45°. وعند ω → ∞ تتجه النقطة إلى الأصل والطور إلى −90°، فيزداد التأخر في الطور كلما زاد التردد.</p>`+
+   `<p>الاستقرارية: ${num('P = '+A.P)} والمنحنى لا يحيط بالنقطة (−1,0)، فـ ${num('N = '+A.N+' ⇒ Z = '+A.Z)} والحلقة المغلقة مستقرة (قطبها المغلق عند ${num('s = '+fmt(A.clPoles[0].re,2))}).</p>`;
+}
+function renderEx1(fresh){
+  const w=Math.pow(10,EX.t1);$('#ex1W').textContent=fmt(w,3);
+  draw($('#plotEx1'),nyquistFigure([
+    {sys:E1,K:1,color:PLC.cyan,name:'H₁ = 1/(s+1)',arrows:true,wMark:w,markColor:PLC.cyan,markName:'H₁ عند ω'},
+    {sys:E2,K:1,color:PLC.violet2,name:'H₂ = 5/(s+5)',dash:'dash',wMark:w,markColor:PLC.violet2,markName:'H₂ عند ω'}
+  ],{showNeg:true,rev:'e1'}),fresh);
+  const z1=Lval(E1,1,{re:0,im:w}),z2=Lval(E2,1,{re:0,im:w});
+  $('#ex1Tbl').innerHTML=`<tr><th></th><th>H₁</th><th>H₂</th></tr>`+
+    [['Re',z1.re,z2.re,4],['Im',z1.im,z2.im,4],['|H|',C.abs(z1),C.abs(z2),4],['∠H (°)',phaseDeg(E1,1,w),phaseDeg(E2,1,w),2]]
+    .map(r=>`<tr><th>${r[0]}</th><td class="ltr">${fmt(r[1],r[3])}</td><td class="ltr">${fmt(r[2],r[3])}</td></tr>`).join('')+
+    `<tr><th>ω الركني</th><td class="ltr">1</td><td class="ltr">5</td></tr>`;
+  const zs=Lval(E2,1,{re:0,im:5*w}),diff=C.abs(C.sub(zs,z1));
+  $('#ex1Why').innerHTML=
+   `<p>${num('H₂(s) = 5/(s+5) = 1/(0.2s+1)')}، أي أن ${num('H₂(jω) = H₁(jω/5)')}: النظامان لهما <b>المنحنى نفسه تماماً</b> (نصف الدائرة) والاختلاف فقط في التردد الذي تمر عنده كل نقطة. تحقق عددي عند ω الحالي: ${num('|H₂(j·5ω) − H₁(jω)| = '+diff.toExponential(1))}.</p>`+
+   `<p>عند ω = ${num(fmt(w,3))} يكون طور H₁ ${num(fmt(phaseDeg(E1,1,w),1)+'°')} وطور H₂ ${num(fmt(phaseDeg(E2,1,w),1)+'°')}. تأخر الطور في H₂ أقل عند التردد نفسه لأن ترددها الركني 5 rad/s مقابل 1 rad/s.</p>`+
+   `<p>النتيجة: النظام الثاني أوسع نطاقاً بخمسة أضعاف (ثابته الزمني 0.2 s مقابل 1 s) وأسرع استجابة، بينما لم يتغير شكل Nyquist. ولأن كليهما لا يحيط بالنقطة (−1,0) فالحلقة المغلقة مستقرة في الحالتين لكل K > 0.</p>`;
+}
+function renderEx2(fresh){
+  const K=EX.k2;$('#ex2K').textContent=fmt(K,1);
+  const A=getA(E3,K),mm=margins(E3,K),st=STATUS[A.status];
+  draw($('#plotEx2'),nyquistFigure([{sys:E3,K,color:PLC.cyan,name:'ω ≥ 0',arrows:true,wMark:mm.pc?mm.pc.w:null,markName:'عبور المحور الحقيقي السالب'}],{showNeg:true,rev:'e2'+K}),fresh);
+  const b=$('#ex2Badge');b.className='badge '+st.cls;b.querySelector('span').textContent=st.label;
+  const zc=mm.pc?Lval(E3,K,{re:0,im:mm.pc.w}):null,Kc=mm.pc?K*Math.pow(10,mm.pc.gm/20):null;
+  $('#ex2Out').innerHTML=rowsHtml([
+    ['P / N / Z',`${A.P} / ${A.N==null?'—':A.N} / ${A.Z==null?'—':A.Z}`],
+    ['عبور المحور الحقيقي عند',zc?fmt(zc.re,4):'—'],
+    ['تردد العبور ω_pc',mm.pc?fmt(mm.pc.w,4)+' rad/s':'—'],
+    ['هامش الربح GM',mm.pc?fmt(mm.pc.gm,2)+' dB':'∞'],
+    ['K الحرج (محسوب)',Kc?fmt(Kc,3):'—']
+  ]);
+  let why=`<p>للنظام قطب عند الأصل ${num('s = 0')}، فيمتد المنحنى إلى ما لا نهاية عند ω → 0⁺ بمقدار ${num('|L| ≈ K/(2ω)')}. نتفادى القطب بنصف دائرة صغيرة في RHP، فيصبح ${num('P = 0')} ويُضاف قوس لانهائي بزاوية 180° باتجاه عقارب الساعة (القوس المتقطع). بعدها نعدّ الإحاطات حول (−1,0) بالطريقة المعتادة.</p>`;
+  why+=`<p>يعبر المنحنى المحور الحقيقي السالب عند ${zc?num(fmt(zc.re,3)):'—'} عندما ω = ${mm.pc?num(fmt(mm.pc.w,3)):'—'} (القيمة النظرية ${num('ω = √2 ≈ 1.414')} والعبور عند ${num('−K/6')}). من المعادلة المميِّزة ${num('s³ + 3s² + 2s + K = 0')} وجدول روث، الاستقرار يتحقق عندما ${num('0 < K < 6')}، والمحسوب عددياً من الاستجابة الترددية: ${num('K_crit = '+(Kc?fmt(Kc,3):'—'))}.</p>`;
+  if(A.status==='stable')why+=`<p>عند K = ${num(fmt(K,1))} يقع العبور على يمين (−1,0) فلا توجد إحاطة: ${num('N = 0 ⇒ Z = N + P = 0')}. النظام مستقر، وهامش الربح ${num(fmt(mm.pc?mm.pc.gm:Infinity,2)+' dB')} يبيّن أنه يتحمل رفع K بمقدار ${num(fmt(Math.pow(10,(mm.pc?mm.pc.gm:0)/20),2)+' ×')} قبل فقدان الاستقرار.</p>`;
+  else if(A.status==='marginal')why+=`<p>عند K = ${num(fmt(K,1))} يمر المنحنى بالنقطة الحرجة بالضبط: أقطاب الحلقة المغلقة على المحور التخيلي عند ${num('±j√2')}، فيحدث تذبذب مستمر بتردد 1.414 rad/s (استقرار حدي).</p>`;
+  else if(A.status==='unstable')why+=`<p>عند K = ${num(fmt(K,1))} يقع العبور على يسار (−1,0) فيحيط به المنحنى ${num(A.N)} مرتين باتجاه عقارب الساعة: ${num(`Z = N + P = ${A.N} + ${A.P} = ${A.Z}`)}. يوجد قطبان مغلقان في RHP (زوج مركّب) فالنظام غير مستقر. رفع الربح يقرّب المنحنى من (−1,0) ثم يجعله يحيط به.</p>`;
+  $('#ex2Why').innerHTML=why;
+}
+const renderEx=[renderEx0,renderEx1,renderEx2];
+let exIdx=0;
+function showEx(i){
+  exIdx=i;
+  $$('#exTabs .tab').forEach(t=>t.classList.toggle('on',+t.dataset.i===i));
+  [0,1,2].forEach(j=>$('#ex'+j).hidden=j!==i);
+  renderEx[i](true);
+}
+$$('#exTabs .tab').forEach(t=>t.addEventListener('click',()=>showEx(+t.dataset.i)));
+$('#ex0T').addEventListener('input',e=>{EX.t0=+e.target.value;renderEx0();});
+$('#ex0Neg').addEventListener('change',e=>{EX.n0=e.target.checked;renderEx0();});
+$('#ex1T').addEventListener('input',e=>{EX.t1=+e.target.value;renderEx1();});
+$('#ex2Kr').addEventListener('input',e=>{EX.k2=+e.target.value;renderEx2();});
+$$('#ex2 .quick button').forEach(b=>b.addEventListener('click',()=>{EX.k2=+b.dataset.k;$('#ex2Kr').value=EX.k2;renderEx2();}));
+$('#ex0Reset').addEventListener('click',()=>{EX.t0=EXD.t0;EX.n0=EXD.n0;$('#ex0T').value=EX.t0;$('#ex0Neg').checked=EX.n0;renderEx0(true);});
+$('#ex1Reset').addEventListener('click',()=>{EX.t1=EXD.t1;$('#ex1T').value=EX.t1;renderEx1(true);});
+$('#ex2Reset').addEventListener('click',()=>{EX.k2=EXD.k2;$('#ex2Kr').value=EX.k2;renderEx2(true);});
+
+/* =====================================================================
+   ٥) الرسم المتحرك في الصفحة الرئيسية: L(s)=10/(s+1)³
+   ===================================================================== */
+function initHero(){
+  const sys={num:[10],den:[1,3,3,1]};
+  const sc=30,x0=150,y0=220,X=r=>x0+sc*r,Y=i=>y0-sc*i;
+  const ws=[0].concat(logspace(-2,2.3,420)),pos=ws.map(w=>Lval(sys,1,{re:0,im:w}));
+  const all=pos.slice().reverse().map(C.conj).concat(pos);
+  const d='M'+all.map(z=>X(z.re).toFixed(1)+' '+Y(z.im).toFixed(1)).join('L');
+  $('#heroBase').setAttribute('d',d);$('#heroPath').setAttribute('d',d);
+  const ax=$('#hAxX'),ay=$('#hAxY');
+  ax.setAttribute('x1',10);ax.setAttribute('x2',550);ax.setAttribute('y1',y0);ax.setAttribute('y2',y0);
+  ay.setAttribute('x1',x0);ay.setAttribute('x2',x0);ay.setAttribute('y1',8);ay.setAttribute('y2',432);
+  let g='';for(let r=-3;r<=14;r++){g+=`<line x1="${X(r)}" y1="8" x2="${X(r)}" y2="432" stroke="rgba(56,189,248,.07)"/>`;}
+  for(let i=-7;i<=7;i++){g+=`<line x1="10" y1="${Y(i)}" x2="550" y2="${Y(i)}" stroke="rgba(56,189,248,.07)"/>`;}
+  $('#heroGrid').innerHTML=g;
+  const cx=X(-1);['heroCrit','heroCritRing'].forEach(id=>{$('#'+id).setAttribute('cx',cx);$('#'+id).setAttribute('cy',y0);});
+  $('#heroCritT').setAttribute('x',cx-4);$('#heroCritT').setAttribute('y',y0+26);
+  $('#heroLblRe').setAttribute('x',536);$('#heroLblRe').setAttribute('y',y0-8);
+  $('#heroLblIm').setAttribute('x',x0+8);$('#heroLblIm').setAttribute('y',20);
+  const path=$('#heroPath'),dot=$('#heroDot'),len=path.getTotalLength();
+  path.style.strokeDasharray=len;
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches){path.style.strokeDashoffset=0;dot.setAttribute('r',0);return;}
+  const T=6500,H=1800;let t0=null;
+  function frame(ts){
+    if(t0===null)t0=ts;
+    const e=(ts-t0)%(T+H),p=Math.min(1,e/T),q=1-Math.pow(1-p,1.6);
+    path.style.strokeDashoffset=len*(1-q);
+    const pt=path.getPointAtLength(len*q);dot.setAttribute('cx',pt.x);dot.setAttribute('cy',pt.y);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* =====================================================================
+   ٦) التشغيل
+   ===================================================================== */
+if(!hasPlotly)$$('.plot').forEach(el=>{el.innerHTML='<p class="err">تعذّر تحميل مكتبة Plotly. تحقّق من الاتصال بالإنترنت ثم أعد تحميل الصفحة.</p>';});
+if(window.renderMathInElement)renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});
+initHero();
+update(true);
+renderEx0(true);
+</script>
+</body>
+</html>
